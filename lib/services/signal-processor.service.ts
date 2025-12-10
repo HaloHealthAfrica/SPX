@@ -4,7 +4,7 @@
  */
 
 import { TradingViewSignal } from '../types';
-import { GeneratedSignal } from './signal-generator.service';
+import { GeneratedSignal, SignalType } from './signal-generator.service';
 import { AutoTradeOrchestrator } from './auto-trade.orchestrator';
 import { runDecisionEngine } from '../decision-engine';
 import { runOptionsDecisionEngine, OptionsDecisionInput } from '../options/decision-engine';
@@ -43,13 +43,18 @@ export class SignalProcessorService {
    */
   async processSignal(
     signal: TradingViewSignal | GeneratedSignal,
-    source: 'webhook' | 'auto-generated'
+    source: 'webhook' | 'auto-generated' | 'manual'
   ): Promise<ProcessedSignal> {
     // Detect if this is an options trade
     const isOptions = this.detectOptionsTrade(signal);
     
     // Classify timeframe
-    const timeframe = classifyTimeframe(signal, undefined);
+    // Convert signal to format expected by classifyTimeframe
+    const signalForClassification = {
+      resolution: 'resolution' in signal ? signal.resolution : signal.timeframe,
+      timestamp: signal.timestamp instanceof Date ? signal.timestamp.getTime() : (typeof signal.timestamp === 'number' ? signal.timestamp : Date.now()),
+    };
+    const timeframe = classifyTimeframe(signalForClassification, undefined);
     
     // Select strike if options
     let strikeSelection = null;
@@ -85,8 +90,23 @@ export class SignalProcessorService {
     let decision;
     if (isOptions && strikeSelection) {
       // Use options decision engine
+      // Convert signal to TradingViewSignal format for OptionsDecisionInput
+      const baseSignal = 'resolution' in signal ? signal : {
+        symbol: signal.symbol,
+        resolution: signal.timeframe,
+        timestamp: signal.timestamp instanceof Date ? signal.timestamp.getTime() : signal.timestamp,
+        signal_type: signal.signal_type as any,
+        direction: signal.direction,
+        confidence: signal.confidence,
+        signal_strength: signal.confidence,
+        confluence_count: signal.confluence_count,
+        entry_price: signal.entry_price,
+        stop_loss: signal.stop_loss,
+        take_profit_1: signal.take_profit_1,
+        active_signals: signal.active_signals as SignalType[],
+      };
       const optionsInput: OptionsDecisionInput = {
-        ...signal,
+        ...baseSignal,
         strike: strikeSelection.primary.strike,
         expiration: strikeSelection.primary.expiration,
         optionType: strikeSelection.primary.optionType,
@@ -94,9 +114,9 @@ export class SignalProcessorService {
         ivRank: 50, // Would fetch
         greeks: {
           delta: strikeSelection.primary.delta,
-          gamma: strikeSelection.primary.quote.gamma,
-          theta: strikeSelection.primary.quote.theta,
-          vega: strikeSelection.primary.quote.vega,
+          gamma: strikeSelection.primary.quote.gamma || 0,
+          theta: strikeSelection.primary.quote.theta || 0,
+          vega: strikeSelection.primary.quote.vega || 0,
         },
         bidAskSpread: this.calculateSpread(strikeSelection.primary.quote),
         openInterest: strikeSelection.primary.quote.openInterest,
@@ -114,9 +134,9 @@ export class SignalProcessorService {
         ivPercentile: this.marketData ? await this.marketData.getIVPercentile(signal.symbol).catch(() => 50) : 50,
         greeks: {
           delta: strikeSelection.primary.delta,
-          gamma: strikeSelection.primary.quote.gamma,
-          theta: strikeSelection.primary.quote.theta,
-          vega: strikeSelection.primary.quote.vega,
+          gamma: strikeSelection.primary.quote.gamma || 0,
+          theta: strikeSelection.primary.quote.theta || 0,
+          vega: strikeSelection.primary.quote.vega || 0,
         },
         bidAskSpread: this.calculateSpread(strikeSelection.primary.quote),
         openInterest: strikeSelection.primary.quote.openInterest,
@@ -124,7 +144,22 @@ export class SignalProcessorService {
       });
     } else {
       // Use directional decision engine
-      decision = runDecisionEngine(signal);
+      // Convert signal to TradingViewSignal format if needed
+      const directionalSignal = 'resolution' in signal ? signal : {
+        symbol: signal.symbol,
+        resolution: signal.timeframe,
+        timestamp: signal.timestamp instanceof Date ? signal.timestamp.getTime() : signal.timestamp,
+        signal_type: signal.signal_type as any,
+        direction: signal.direction,
+        confidence: signal.confidence,
+        signal_strength: signal.confidence,
+        confluence_count: signal.confluence_count,
+        entry_price: signal.entry_price,
+        stop_loss: signal.stop_loss,
+        take_profit_1: signal.take_profit_1,
+        active_signals: signal.active_signals as SignalType[],
+      };
+      decision = runDecisionEngine(directionalSignal);
     }
 
     // Route to auto-trade if enabled
@@ -133,13 +168,13 @@ export class SignalProcessorService {
       const generatedSignal: GeneratedSignal = {
         id: `webhook-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         symbol: signal.symbol,
-        timestamp: new Date(signal.timestamp * 1000),
-        timeframe: signal.resolution || '1D',
-        signal_type: signal.signal_type,
+        timestamp: signal.timestamp instanceof Date ? signal.timestamp : new Date(typeof signal.timestamp === 'number' ? (signal.timestamp > 1000000000000 ? signal.timestamp : signal.timestamp * 1000) : Date.now()),
+        timeframe: ('resolution' in signal ? signal.resolution : signal.timeframe) || '1D',
+        signal_type: signal.signal_type as any,
         direction: signal.direction,
         confidence: signal.confidence,
         confluence_count: signal.confluence_count,
-        active_signals: signal.active_signals,
+        active_signals: signal.active_signals as SignalType[],
         entry_price: signal.entry_price,
         stop_loss: signal.stop_loss,
         take_profit_1: signal.take_profit_1,

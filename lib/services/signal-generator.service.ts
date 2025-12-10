@@ -3,7 +3,8 @@
  * Agent 3: Continuously analyzes market data and generates trading signals
  */
 
-import { MarketDataService, OHLCV } from './market-data.service';
+import { MarketDataService } from './market-data.service';
+import { OHLCV } from '../market-data';
 import { EventEmitter } from 'events';
 
 export type SignalType = 
