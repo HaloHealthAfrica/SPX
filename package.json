@@ -1,0 +1,45 @@
+{
+  "name": "spx-fusion-trading-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
+    "deploy:auto": "node scripts/auto-deploy.js"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "pg": "^8.11.3",
+    "recharts": "^2.10.3",
+    "@tanstack/react-query": "^5.17.0",
+    "date-fns": "^2.30.0",
+    "zod": "^3.22.4",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
+    "bull": "^4.12.0",
+    "ioredis": "^5.3.2",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.10.9",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@types/node-cron": "^3.0.11",
+    "typescript": "^5.3.3",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.32",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.0.0"
+  }
+}
+
