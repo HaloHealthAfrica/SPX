@@ -118,7 +118,7 @@ export class AutoTradeOrchestrator extends EventEmitter {
     this.tradesBlocked = 0;
 
     console.log('[AutoTradeOrchestrator] Started');
-    this.emit('status', this.getStatus());
+    this.getStatus().then(status => this.emit('status', status)).catch(err => console.error('[AutoTradeOrchestrator] Error getting status:', err));
   }
 
   async stop(): Promise<void> {
@@ -129,7 +129,7 @@ export class AutoTradeOrchestrator extends EventEmitter {
 
     this.isRunning = false;
     console.log('[AutoTradeOrchestrator] Stopped');
-    this.emit('status', this.getStatus());
+    this.getStatus().then(status => this.emit('status', status)).catch(err => console.error('[AutoTradeOrchestrator] Error getting status:', err));
   }
 
   async pause(): Promise<void> {
@@ -137,7 +137,7 @@ export class AutoTradeOrchestrator extends EventEmitter {
 
     this.isPaused = true;
     console.log('[AutoTradeOrchestrator] Paused');
-    this.emit('status', this.getStatus());
+    this.getStatus().then(status => this.emit('status', status)).catch(err => console.error('[AutoTradeOrchestrator] Error getting status:', err));
   }
 
   async resume(): Promise<void> {
@@ -145,7 +145,7 @@ export class AutoTradeOrchestrator extends EventEmitter {
 
     this.isPaused = false;
     console.log('[AutoTradeOrchestrator] Resumed');
-    this.emit('status', this.getStatus());
+    this.getStatus().then(status => this.emit('status', status)).catch(err => console.error('[AutoTradeOrchestrator] Error getting status:', err));
   }
 
   async killSwitch(): Promise<void> {
@@ -189,8 +189,8 @@ export class AutoTradeOrchestrator extends EventEmitter {
     return { ...this.config };
   }
 
-  getStatus(): OrchestratorStatus {
-    const account = this.executor.getAccountSummary();
+  async getStatus(): Promise<OrchestratorStatus> {
+    const account = await this.executor.getAccountSummary();
     
     return {
       enabled: this.config.enabled,
@@ -207,7 +207,7 @@ export class AutoTradeOrchestrator extends EventEmitter {
       currentDrawdown: 0, // Would calculate from equity curve
       maxDrawdownReached: this.dailyPnL <= -this.config.maxDailyLoss,
       dailyLimitReached: this.tradesExecuted >= this.config.maxDailyTrades,
-      openPositions: (await account).openPositions || 0,
+      openPositions: account.openPositions || 0,
       totalExposure: 0, // Would calculate from positions
     };
   }
@@ -284,7 +284,7 @@ export class AutoTradeOrchestrator extends EventEmitter {
       const order = {
         id: `auto-${decision.signalId}-${Date.now()}`,
         symbol: decision.signal.symbol,
-        side: decision.signal.direction === 'LONG' ? 'BUY' : 'SELL',
+        side: (decision.signal.direction === 'LONG' ? 'BUY' : 'SELL') as 'BUY' | 'SELL',
         type: 'MARKET' as const,
         quantity: decision.positionSize || 1,
         timeInForce: 'DAY' as const,

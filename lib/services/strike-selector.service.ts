@@ -109,13 +109,15 @@ export class StrikeSelectorService {
     const candidateStrikes = chain.strikes
       .map(strikeData => {
         const quote = optionType === 'CALL' ? strikeData.call : strikeData.put;
+        if (!quote) return null; // Skip if quote is undefined
         return {
           strike: strikeData.strike,
           quote,
-          delta: quote.delta,
+          delta: quote.delta || 0,
           dte: Math.floor((chain.expiration.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
         };
       })
+      .filter((c): c is NonNullable<typeof c> => c !== null)
       .filter(c => {
         const deltaRange = this.getDeltaRange(criteria.timeframe);
         return Math.abs(c.delta) >= deltaRange[0] && Math.abs(c.delta) <= deltaRange[1];
@@ -172,8 +174,8 @@ export class StrikeSelectorService {
     const best = scoredStrikes.sort((a, b) => b.totalScore - a.totalScore)[0];
     
     // Filter by min R:R if specified
-    const validStrikes = criteria.minRR
-      ? scoredStrikes.filter(s => s.riskReward >= criteria.minRR)
+    const validStrikes = criteria.minRR !== undefined
+      ? scoredStrikes.filter(s => s.riskReward >= (criteria.minRR || 0))
       : scoredStrikes;
     
     const selected = validStrikes.length > 0 
@@ -220,6 +222,7 @@ export class StrikeSelectorService {
     const strikes = chain.strikes
       .filter(s => {
         const quote = optionType === 'CALL' ? s.call : s.put;
+        if (!quote) return false;
         return quote.openInterest >= this.getMinOI(criteria.timeframe) &&
                this.calculateSpreadPercent(quote) <= this.getMaxSpread(criteria.timeframe);
       })
@@ -243,6 +246,7 @@ export class StrikeSelectorService {
       const shortQuote = optionType === 'CALL' ? shortStrike.call : shortStrike.put;
       
       const width = Math.abs(shortStrike.strike - longStrike.strike);
+      if (!longQuote || !shortQuote) continue; // Skip if quotes are missing
       if (width < spreadWidth * 0.5 || width > spreadWidth * 2) continue;
       
       const netDebit = longQuote.last - shortQuote.last;

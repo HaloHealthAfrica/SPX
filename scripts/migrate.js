@@ -416,7 +416,12 @@ async function migrate() {
   }
 }
 
-migrate()
+// Export for use in API routes
+module.exports = { migrate };
+
+// Run if called directly
+if (require.main === module) {
+  migrate()
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error);
