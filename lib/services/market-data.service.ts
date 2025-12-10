@@ -19,9 +19,6 @@ import {
   MarketBreadth
 } from '../market-data';
 
-// Re-export types for convenience
-export type { OHLCV, OptionsChain, OptionQuote, OptionsFlow, MarketBreadth };
-
 export interface MarketDataConfig {
   symbols: string[];
   dataSource: 'polygon' | 'alpaca' | 'tradier' | 'ibkr' | 'mock';

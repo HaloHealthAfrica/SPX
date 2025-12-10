@@ -277,21 +277,11 @@ export class PaperExecutorService {
     let position = this.positions.get(positionId);
     
     if (!position) {
-      // Convert PaperOrderLeg[] to PositionLeg[]
-      const positionLegs: PositionLeg[] = (order.legs || []).map(leg => ({
-        symbol: order.symbol,
-        strike: leg.strike,
-        expiration: leg.expiration,
-        optionType: leg.optionType,
-        quantity: leg.quantity,
-        entryPrice: fill.price, // Use fill price as entry price
-      }));
-
       position = {
         id: positionId,
         symbol: order.symbol,
         strategy: order.legs ? 'CALL_DEBIT_SPREAD' : 'DIRECTIONAL',
-        legs: positionLegs,
+        legs: order.legs || [],
         entryTime: fill.timestamp,
         entryPrice: fill.price,
         quantity: fill.quantity,

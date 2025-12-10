@@ -142,9 +142,9 @@ export async function POST(request: NextRequest) {
             ivRank: 50, // Would fetch
             greeks: {
               delta: strikeSelection.primary.delta,
-              gamma: strikeSelection.primary.quote.gamma || 0,
-              theta: strikeSelection.primary.quote.theta || 0,
-              vega: strikeSelection.primary.quote.vega || 0,
+              gamma: strikeSelection.primary.quote.gamma,
+              theta: strikeSelection.primary.quote.theta,
+              vega: strikeSelection.primary.quote.vega,
             },
             bidAskSpread: (strikeSelection.primary.quote.ask - strikeSelection.primary.quote.bid) / 
                          ((strikeSelection.primary.quote.ask + strikeSelection.primary.quote.bid) / 2),
@@ -163,9 +163,9 @@ export async function POST(request: NextRequest) {
             ivPercentile: 50,
             greeks: {
               delta: strikeSelection.primary.delta,
-              gamma: strikeSelection.primary.quote.gamma || 0,
-              theta: strikeSelection.primary.quote.theta || 0,
-              vega: strikeSelection.primary.quote.vega || 0,
+              gamma: strikeSelection.primary.quote.gamma,
+              theta: strikeSelection.primary.quote.theta,
+              vega: strikeSelection.primary.quote.vega,
             },
             bidAskSpread: (strikeSelection.primary.quote.ask - strikeSelection.primary.quote.bid) / 
                          ((strikeSelection.primary.quote.ask + strikeSelection.primary.quote.bid) / 2),
