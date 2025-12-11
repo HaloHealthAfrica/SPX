@@ -4,8 +4,11 @@ import { Pool } from 'pg';
 // In serverless environments, we need smaller pools and faster timeouts
 const isVercel = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
 
+// Support both DATABASE_URL and POSTGRES_URL (Vercel Postgres uses POSTGRES_URL)
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   // Serverless-optimized settings
   max: isVercel ? 1 : 20, // Single connection for serverless (Vercel reuses connections)
   idleTimeoutMillis: isVercel ? 10000 : 30000, // Faster timeout for serverless
