@@ -3,6 +3,12 @@ import pool from '@/lib/db'
 
 export async function GET() {
   try {
+    // Check if database is configured
+    if (!process.env.DATABASE_URL) {
+      console.warn('[API] DATABASE_URL not configured');
+      return NextResponse.json({ signals: [] });
+    }
+
     // Get recent signals with decision details
     const result = await pool.query(`
       SELECT 
@@ -54,8 +60,16 @@ export async function GET() {
     return NextResponse.json({ signals })
   } catch (error: any) {
     console.error('[API] Signals feed error:', error)
-    // Return empty array on error
-    return NextResponse.json({ signals: [] })
+    console.error('[API] Error details:', {
+      message: error.message,
+      code: error.code,
+      databaseUrl: process.env.DATABASE_URL ? 'configured' : 'missing'
+    })
+    // Return empty array on error but log the issue
+    return NextResponse.json({ 
+      signals: [],
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
   }
 }
 

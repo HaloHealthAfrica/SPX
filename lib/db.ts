@@ -9,8 +9,8 @@ const pool = new Pool({
   // Serverless-optimized settings
   max: isVercel ? 1 : 20, // Single connection for serverless (Vercel reuses connections)
   idleTimeoutMillis: isVercel ? 10000 : 30000, // Faster timeout for serverless
-  connectionTimeoutMillis: isVercel ? 5000 : 2000, // Longer timeout for initial connection
-  // SSL required for production/Vercel
+  connectionTimeoutMillis: isVercel ? 10000 : 2000, // Longer timeout for Neon connections
+  // SSL required for production/Vercel (Neon requires SSL)
   ssl: process.env.NODE_ENV === 'production' || isVercel 
     ? { rejectUnauthorized: false } 
     : false,
